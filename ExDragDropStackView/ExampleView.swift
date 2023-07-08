@@ -9,7 +9,7 @@ import UIKit
 
 class ExampleView: UIView {
     
-    let rStackView = APRedorderableStackView()
+    let rStackView = DragDropStackView()
     
     var rViews = [RView]()
     

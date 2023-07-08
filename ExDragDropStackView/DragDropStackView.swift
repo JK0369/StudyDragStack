@@ -9,25 +9,15 @@ import UIKit
 
 @objc
 public protocol APStackViewReorderDelegate {
-    /// didBeginReordering - called when reordering begins
-    @objc optional func didBeginReordering()
-    
-    /// Whenever a user drags a subview for a reordering, the delegate is told whether the direction
-    /// was up or down, as well as what the max and min Y values are of the subview
-    @objc optional func didDragToReorder(inUpDirection up: Bool, maxY: CGFloat, minY: CGFloat)
-    
-    /// didReorder - called whenever a subview was reordered (returns the new index)
-    
-    /// didEndReordering - called when reordering ends
-    @objc optional func didEndReordering()
+    @objc optional func didBeginDrag()
+    @objc optional func dargging(inUpDirection up: Bool, maxY: CGFloat, minY: CGFloat)
+    @objc optional func didEndDrop()
 }
 
-public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
-    
-    /// Setting `reorderdingEnabled` to `true` enables a drag to reorder behavior like `UITableView`
+public class DragDropStackView: UIStackView, UIGestureRecognizerDelegate {
     public var reorderingEnabled = false {
         didSet {
-            self.setReorderingEnabled(self.reorderingEnabled)
+            setReorderingEnabled(reorderingEnabled)
         }
     }
     public var reorderDelegate: APStackViewReorderDelegate?
@@ -56,7 +46,7 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
     public var dragHintSpacing: CGFloat = 5
     public var longPressMinimumPressDuration = 0.2 {
         didSet {
-            self.updateMinimumPressDuration()
+            updateMinimumPressDuration()
         }
     }
     
@@ -64,28 +54,28 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
     // ---------------------------------------------------------------------------------------------
     override public func addArrangedSubview(_ view: UIView) {
         super.addArrangedSubview(view)
-        self.addLongPressGestureRecognizerForReorderingToView(view)
+        addLongPressGestureRecognizerForReorderingToView(view)
     }
     
     fileprivate func addLongPressGestureRecognizerForReorderingToView(_ view: UIView) {
-        let longPressGR = UILongPressGestureRecognizer(target: self, action: #selector(APRedorderableStackView.handleLongPress(_:)))
+        let longPressGR = UILongPressGestureRecognizer(target: self, action: #selector(DragDropStackView.handleLongPress(_:)))
         longPressGR.delegate = self
-        longPressGR.minimumPressDuration = self.longPressMinimumPressDuration
-        longPressGR.isEnabled = self.reorderingEnabled
+        longPressGR.minimumPressDuration = longPressMinimumPressDuration
+        longPressGR.isEnabled = reorderingEnabled
         view.addGestureRecognizer(longPressGR)
         
-        self.longPressGRS.append(longPressGR)
+        longPressGRS.append(longPressGR)
     }
     
     fileprivate func setReorderingEnabled(_ enabled: Bool) {
-        for longPressGR in self.longPressGRS {
+        for longPressGR in longPressGRS {
             longPressGR.isEnabled = enabled
         }
     }
     
     fileprivate func updateMinimumPressDuration() {
-        for longPressGR in self.longPressGRS {
-            longPressGR.minimumPressDuration = self.longPressMinimumPressDuration
+        for longPressGR in longPressGRS {
+            longPressGR.minimumPressDuration = longPressMinimumPressDuration
         }
     }
     
@@ -93,14 +83,14 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
         
         if gr.state == .began {
             
-            self.reordering = true
-            self.reorderDelegate?.didBeginReordering?()
+            reordering = true
+            reorderDelegate?.didBeginDrag?()
             
-            self.actualView = gr.view!
-            self.originalPosition = gr.location(in: self)
-            self.originalPosition.y -= self.dragHintSpacing
-            self.pointForReordering = self.originalPosition
-            self.prepareForReordering()
+            actualView = gr.view!
+            originalPosition = gr.location(in: self)
+            originalPosition.y -= dragHintSpacing
+            pointForReordering = originalPosition
+            prepareForReordering()
             
         } else if gr.state == .changed {
             
@@ -110,22 +100,22 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
             let yOffset = newLocation.y - originalPosition.y
             let translation = CGAffineTransform(translationX: xOffset, y: yOffset)
             // Replicate the scale that was initially applied in perpareForReordering:
-            let scale = CGAffineTransform(scaleX: self.temporaryViewScale, y: self.temporaryViewScale)
-            self.temporaryView.transform = scale.concatenating(translation)
-            self.temporaryViewForShadow.transform = translation
+            let scale = CGAffineTransform(scaleX: temporaryViewScale, y: temporaryViewScale)
+            temporaryView.transform = scale.concatenating(translation)
+            temporaryViewForShadow.transform = translation
             
             // Use the midY of the temporaryView to determine the dragging direction, location
-            // maxY and minY are used in the delegate call didDragToReorder
-            let maxY = self.temporaryView.frame.maxY
-            let midY = self.temporaryView.frame.midY
-            let minY = self.temporaryView.frame.minY
-            let index = self.indexOfArrangedSubview(self.actualView)
+            // maxY and minY are used in the delegate call dargging
+            let maxY = temporaryView.frame.maxY
+            let midY = temporaryView.frame.midY
+            let minY = temporaryView.frame.minY
+            let index = indexOfArrangedSubview(actualView)
             
-            if midY > self.pointForReordering.y {
+            if midY > pointForReordering.y {
                 // Dragging the view down
-                self.reorderDelegate?.didDragToReorder?(inUpDirection: false, maxY: maxY, minY: minY)
+                reorderDelegate?.dargging?(inUpDirection: false, maxY: maxY, minY: minY)
                 
-                if let nextView = self.getNextViewInStack(usingIndex: index) {
+                if let nextView = getNextViewInStack(usingIndex: index) {
                     if midY > nextView.frame.midY {
                         
                         // Swap the two arranged subviews
@@ -133,16 +123,16 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
                             self.insertArrangedSubview(nextView, at: index)
                             self.insertArrangedSubview(self.actualView, at: index + 1)
                         })
-                        self.finalReorderFrame = self.actualView.frame
-                        self.pointForReordering.y = self.actualView.frame.midY
+                        finalReorderFrame = actualView.frame
+                        pointForReordering.y = actualView.frame.midY
                     }
                 }
                 
             } else {
                 // Dragging the view up
-                self.reorderDelegate?.didDragToReorder?(inUpDirection: true, maxY: maxY, minY: minY)
+                reorderDelegate?.dargging?(inUpDirection: true, maxY: maxY, minY: minY)
                 
-                if let previousView = self.getPreviousViewInStack(usingIndex: index) {
+                if let previousView = getPreviousViewInStack(usingIndex: index) {
                     if midY < previousView.frame.midY {
                         
                         // Swap the two arranged subviews
@@ -150,8 +140,8 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
                             self.insertArrangedSubview(previousView, at: index)
                             self.insertArrangedSubview(self.actualView, at: index - 1)
                         })
-                        self.finalReorderFrame = self.actualView.frame
-                        self.pointForReordering.y = self.actualView.frame.midY
+                        finalReorderFrame = actualView.frame
+                        pointForReordering.y = actualView.frame.midY
                         
                     }
                 }
@@ -159,25 +149,25 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
             
         } else if gr.state == .ended || gr.state == .cancelled || gr.state == .failed {
             
-            self.cleanupUpAfterReordering()
-            self.reordering = false
-            self.reorderDelegate?.didEndReordering?()
+            cleanupUpAfterReordering()
+            reordering = false
+            reorderDelegate?.didEndDrop?()
         }
         
     }
     
     fileprivate func prepareForReordering() {
         
-        self.clipsToBounds = self.clipsToBoundsWhileReordering
+        clipsToBounds = clipsToBoundsWhileReordering
         
         // Configure the temporary view
-        self.temporaryView = self.actualView.snapshotView(afterScreenUpdates: true)
-        self.temporaryView.frame = self.actualView.frame
-        self.finalReorderFrame = self.actualView.frame
-        self.addSubview(self.temporaryView)
+        temporaryView = actualView.snapshotView(afterScreenUpdates: true)
+        temporaryView.frame = actualView.frame
+        finalReorderFrame = actualView.frame
+        addSubview(temporaryView)
         
         // Hide the actual view and grow the temporaryView
-        self.actualView.alpha = 0
+        actualView.alpha = 0
         
         UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: [.allowUserInteraction, .beginFromCurrentState], animations: {
             
@@ -211,24 +201,24 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
         let roundKey = "Round"
         let round = CABasicAnimation(keyPath: "cornerRadius")
         round.fromValue = 0
-        round.toValue = self.cornerRadii
+        round.toValue = cornerRadii
         round.duration = 0.1
         round.isRemovedOnCompletion = false
         round.fillMode = CAMediaTimingFillMode.forwards
         
         // Grow, hint with offset, fade, round the temporaryView
-        let scale = CGAffineTransform(scaleX: self.temporaryViewScale, y: self.temporaryViewScale)
-        let translation = CGAffineTransform(translationX: 0, y: self.dragHintSpacing)
-        self.temporaryView.transform = scale.concatenating(translation)
-        self.temporaryView.alpha = self.temporaryViewAlpha
-        self.temporaryView.layer.add(round, forKey: roundKey)
-        self.temporaryView.clipsToBounds = true // Clips to bounds to apply corner radius
+        let scale = CGAffineTransform(scaleX: temporaryViewScale, y: temporaryViewScale)
+        let translation = CGAffineTransform(translationX: 0, y: dragHintSpacing)
+        temporaryView.transform = scale.concatenating(translation)
+        temporaryView.alpha = temporaryViewAlpha
+        temporaryView.layer.add(round, forKey: roundKey)
+        temporaryView.clipsToBounds = true // Clips to bounds to apply corner radius
         
         // Shadow
-        self.temporaryViewForShadow = UIView(frame: self.temporaryView.frame)
-        self.insertSubview(self.temporaryViewForShadow, belowSubview: self.temporaryView)
-        self.temporaryViewForShadow.layer.shadowColor = UIColor.black.cgColor
-        self.temporaryViewForShadow.layer.shadowPath = UIBezierPath(roundedRect: self.temporaryView.bounds, cornerRadius: self.cornerRadii).cgPath
+        temporaryViewForShadow = UIView(frame: temporaryView.frame)
+        insertSubview(temporaryViewForShadow, belowSubview: temporaryView)
+        temporaryViewForShadow.layer.shadowColor = UIColor.black.cgColor
+        temporaryViewForShadow.layer.shadowPath = UIBezierPath(roundedRect: temporaryView.bounds, cornerRadius: cornerRadii).cgPath
         
         // Shadow animations
         let shadowOpacityKey = "ShadowOpacity"
@@ -255,15 +245,15 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
         shadowRadius.isRemovedOnCompletion = false
         shadowRadius.fillMode = CAMediaTimingFillMode.forwards
         
-        self.temporaryViewForShadow.layer.add(shadowOpacity, forKey: shadowOpacityKey)
-        self.temporaryViewForShadow.layer.add(shadowOffset, forKey: shadowOffsetKey)
-        self.temporaryViewForShadow.layer.add(shadowRadius, forKey: shadowRadiusKey)
+        temporaryViewForShadow.layer.add(shadowOpacity, forKey: shadowOpacityKey)
+        temporaryViewForShadow.layer.add(shadowOffset, forKey: shadowOffsetKey)
+        temporaryViewForShadow.layer.add(shadowRadius, forKey: shadowRadiusKey)
         
         // Scale down and round other arranged subviews
-        for subview in self.arrangedSubviews {
-            if subview != self.actualView {
+        for subview in arrangedSubviews {
+            if subview != actualView {
                 subview.layer.add(round, forKey: roundKey)
-                subview.transform = CGAffineTransform(scaleX: self.otherViewsScale, y: self.otherViewsScale)
+                subview.transform = CGAffineTransform(scaleX: otherViewsScale, y: otherViewsScale)
             }
         }
     }
@@ -272,17 +262,17 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
         
         let squareKey = "Square"
         let square = CABasicAnimation(keyPath: "cornerRadius")
-        square.fromValue = self.cornerRadii
+        square.fromValue = cornerRadii
         square.toValue = 0
         square.duration = 0.1
         square.isRemovedOnCompletion = false
         square.fillMode = CAMediaTimingFillMode.forwards
         
         // Return drag view to original appearance
-        self.temporaryView.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
-        self.temporaryView.frame = self.finalReorderFrame
-        self.temporaryView.alpha = 1.0
-        self.temporaryView.layer.add(square, forKey: squareKey)
+        temporaryView.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
+        temporaryView.frame = finalReorderFrame
+        temporaryView.alpha = 1.0
+        temporaryView.layer.add(square, forKey: squareKey)
         
         // Shadow animations
         let shadowOpacityKey = "ShadowOpacity"
@@ -309,12 +299,12 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
         shadowRadius.isRemovedOnCompletion = false
         shadowRadius.fillMode = CAMediaTimingFillMode.forwards
         
-        self.temporaryViewForShadow.layer.add(shadowOpacity, forKey: shadowOpacityKey)
-        self.temporaryViewForShadow.layer.add(shadowOffset, forKey: shadowOffsetKey)
-        self.temporaryViewForShadow.layer.add(shadowRadius, forKey: shadowRadiusKey)
+        temporaryViewForShadow.layer.add(shadowOpacity, forKey: shadowOpacityKey)
+        temporaryViewForShadow.layer.add(shadowOffset, forKey: shadowOffsetKey)
+        temporaryViewForShadow.layer.add(shadowRadius, forKey: shadowRadiusKey)
         
         // Return other arranged subviews to original appearances
-        for subview in self.arrangedSubviews {
+        for subview in arrangedSubviews {
             UIView.animate(withDuration: 0.3, animations: {
                 subview.layer.add(square, forKey: squareKey)
                 subview.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
@@ -327,7 +317,7 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
     // ---------------------------------------------------------------------------------------------
     
     fileprivate func indexOfArrangedSubview(_ view: UIView) -> Int {
-        for (index, subview) in self.arrangedSubviews.enumerated() {
+        for (index, subview) in arrangedSubviews.enumerated() {
             if view == subview {
                 return index
             }
@@ -337,16 +327,16 @@ public class APRedorderableStackView: UIStackView, UIGestureRecognizerDelegate {
     
     fileprivate func getPreviousViewInStack(usingIndex index: Int) -> UIView? {
         if index == 0 { return nil }
-        return self.arrangedSubviews[index - 1]
+        return arrangedSubviews[index - 1]
     }
     
     fileprivate func getNextViewInStack(usingIndex index: Int) -> UIView? {
-        if index == self.arrangedSubviews.count - 1 { return nil }
-        return self.arrangedSubviews[index + 1]
+        if index == arrangedSubviews.count - 1 { return nil }
+        return arrangedSubviews[index + 1]
     }
     
     override public func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
-        return !self.reordering
+        return !reordering
     }
 
 }

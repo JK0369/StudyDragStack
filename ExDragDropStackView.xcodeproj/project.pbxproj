@@ -17,7 +17,7 @@
 		4A0F63462A5734B000C1C0E1 /* ExDragDropStackViewUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63452A5734B000C1C0E1 /* ExDragDropStackViewUITests.swift */; };
 		4A0F63482A5734B000C1C0E1 /* ExDragDropStackViewUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63472A5734B000C1C0E1 /* ExDragDropStackViewUITestsLaunchTests.swift */; };
 		4A0F63552A5734E400C1C0E1 /* ExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63542A5734E400C1C0E1 /* ExampleView.swift */; };
-		4A0F63572A5734ED00C1C0E1 /* ReorderStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63562A5734ED00C1C0E1 /* ReorderStackView.swift */; };
+		4A0F63572A5734ED00C1C0E1 /* DragDropStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */; };
 		4A0F63592A57351800C1C0E1 /* HexColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63582A57351800C1C0E1 /* HexColor.swift */; };
 /* End PBXBuildFile section */
 
@@ -53,7 +53,7 @@
 		4A0F63452A5734B000C1C0E1 /* ExDragDropStackViewUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExDragDropStackViewUITests.swift; sourceTree = "<group>"; };
 		4A0F63472A5734B000C1C0E1 /* ExDragDropStackViewUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExDragDropStackViewUITestsLaunchTests.swift; sourceTree = "<group>"; };
 		4A0F63542A5734E400C1C0E1 /* ExampleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleView.swift; sourceTree = "<group>"; };
-		4A0F63562A5734ED00C1C0E1 /* ReorderStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReorderStackView.swift; sourceTree = "<group>"; };
+		4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragDropStackView.swift; sourceTree = "<group>"; };
 		4A0F63582A57351800C1C0E1 /* HexColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexColor.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -110,7 +110,7 @@
 				4A0F63282A5734AE00C1C0E1 /* ViewController.swift */,
 				4A0F63542A5734E400C1C0E1 /* ExampleView.swift */,
 				4A0F63582A57351800C1C0E1 /* HexColor.swift */,
-				4A0F63562A5734ED00C1C0E1 /* ReorderStackView.swift */,
+				4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */,
 				4A0F632A2A5734AE00C1C0E1 /* Main.storyboard */,
 				4A0F632D2A5734AF00C1C0E1 /* Assets.xcassets */,
 				4A0F632F2A5734AF00C1C0E1 /* LaunchScreen.storyboard */,
@@ -272,7 +272,7 @@
 				4A0F63252A5734AE00C1C0E1 /* AppDelegate.swift in Sources */,
 				4A0F63272A5734AE00C1C0E1 /* SceneDelegate.swift in Sources */,
 				4A0F63552A5734E400C1C0E1 /* ExampleView.swift in Sources */,
-				4A0F63572A5734ED00C1C0E1 /* ReorderStackView.swift in Sources */,
+				4A0F63572A5734ED00C1C0E1 /* DragDropStackView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

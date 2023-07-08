@@ -59,16 +59,16 @@ class ViewController: UIViewController, APStackViewReorderDelegate {
     }
     
     // Delegate Methods
-    func didBeginReordering() {
+    func didBeginDrag() {
         print("Did begin reordering")
     }
     
-    func didDragToReorder(inUpDirection up: Bool, maxY: CGFloat, minY: CGFloat) {
+    func dargging(inUpDirection up: Bool, maxY: CGFloat, minY: CGFloat) {
         print("Dragging: \(up ? "Up" : "Down")")
     }
 
     
-    func didEndReordering() {
+    func didEndDrop() {
         print("Did end reordering")
     }
     

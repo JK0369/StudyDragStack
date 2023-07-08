@@ -9,7 +9,7 @@ import UIKit
 
 class ExampleView: UIView {
     
-    let rStackView = DragDropStackView()
+    let dargDropStackView = DragDropStackView()
     
     var rViews = [RView]()
     
@@ -40,23 +40,23 @@ class ExampleView: UIView {
     
     func configureSubviews() {
         // Add Subviews
-        self.addSubview(self.rStackView)
+        self.addSubview(self.dargDropStackView)
         for rView in self.rViews {
-            self.rStackView.addArrangedSubview(rView)
+            self.dargDropStackView.addArrangedSubview(rView)
         }
         
         // Style View
         self.backgroundColor = .white
         
         // Style Subviews
-        self.rStackView.axis = .vertical
-        self.rStackView.distribution = .fillProportionally
-        self.rStackView.alignment = .fill
-        self.rStackView.clipsToBounds = false
+        self.dargDropStackView.axis = .vertical
+        self.dargDropStackView.distribution = .fillProportionally
+        self.dargDropStackView.alignment = .fill
+        self.dargDropStackView.clipsToBounds = false
         
         // ----------------------------------------------------------------------------
         // Set reorderingEnabled to true to, well, enable reordering
-        self.rStackView.reorderingEnabled = true
+        self.dargDropStackView.reorderingEnabled = true
         // ----------------------------------------------------------------------------
         
     }
@@ -66,11 +66,11 @@ class ExampleView: UIView {
         self.configureSubviews()
         
         // Add Constraints
-        self.rStackView.translatesAutoresizingMaskIntoConstraints = false
-        let left    = NSLayoutConstraint(item: self.rStackView, attribute: .left, relatedBy: .equal, toItem: self, attribute: .left, multiplier: 1.0, constant: 15)
-        let right   = NSLayoutConstraint(item: self.rStackView, attribute: .right, relatedBy: .equal, toItem: self, attribute: .right, multiplier: 1.0, constant: -15)
-        let top     = NSLayoutConstraint(item: self.rStackView, attribute: .top, relatedBy: .equal, toItem: self, attribute: .top, multiplier: 1.0, constant: 40)
-        let bottom  = NSLayoutConstraint(item: self.rStackView, attribute: .bottom, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1.0, constant: -40)
+        self.dargDropStackView.translatesAutoresizingMaskIntoConstraints = false
+        let left    = NSLayoutConstraint(item: self.dargDropStackView, attribute: .left, relatedBy: .equal, toItem: self, attribute: .left, multiplier: 1.0, constant: 15)
+        let right   = NSLayoutConstraint(item: self.dargDropStackView, attribute: .right, relatedBy: .equal, toItem: self, attribute: .right, multiplier: 1.0, constant: -15)
+        let top     = NSLayoutConstraint(item: self.dargDropStackView, attribute: .top, relatedBy: .equal, toItem: self, attribute: .top, multiplier: 1.0, constant: 40)
+        let bottom  = NSLayoutConstraint(item: self.dargDropStackView, attribute: .bottom, relatedBy: .equal, toItem: self, attribute: .bottom, multiplier: 1.0, constant: -40)
         
         self.addConstraint(left)
         self.addConstraint(right)

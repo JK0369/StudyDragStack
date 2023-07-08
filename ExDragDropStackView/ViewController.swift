@@ -7,7 +7,7 @@
 
 import UIKit
 
-class ViewController: UIViewController, APStackViewReorderDelegate {
+class ViewController: UIViewController, DragDropStackViewDelegate {
     
     let textField = UITextField()
     let sv = UIScrollView()
@@ -48,14 +48,7 @@ class ViewController: UIViewController, APStackViewReorderDelegate {
             exampleView.widthAnchor.constraint(equalTo: sv.widthAnchor),
         ])
         
-//        sv.snp.makeConstraints {
-//            $0.edges.equalToSuperview()
-//        }
-//        exampleView.snp.makeConstraints {
-//            $0.edges.width.equalToSuperview()
-//        }
-        
-        self.exampleView.rStackView.reorderDelegate = self
+        self.exampleView.dargDropStackView.dargDropDelegate = self
     }
     
     // Delegate Methods

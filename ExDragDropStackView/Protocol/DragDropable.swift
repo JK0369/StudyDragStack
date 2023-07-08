@@ -35,54 +35,25 @@ struct DragDropConfig {
     }
 }
 
-private struct AssociatedKeys {
-    static var isStatusDragging = "isStatusDragging"
-    static var finalReorderFrame = "finalReorderFrame"
-    static var originalPosition = "originalPosition"
-    static var pointForReordering = "pointForReordering"
-    static var actualView = "actualView"
-    static var temporaryView = "temporaryView"
-    static var temporaryViewForShadow = "temporaryViewForShadow"
-}
-
-protocol DragDropable {
+protocol DragDropable: AnyObject {
     var dargDropDelegate: DragDropStackViewDelegate? { get }
     var config: DragDropConfig { get }
+    var gestures: [UILongPressGestureRecognizer] { get set }
     
-    func handleLongPress(_ gesture: UILongPressGestureRecognizer)
+    /// must call each views in stackView's addArrangedSubview
+    func addLongPressGestureForDragDrop(arrangedSubview: UIView)
 }
 
 extension DragDropable where Self: UIStackView {
-    var isStatusDragging: Bool {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.isStatusDragging) as? Bool) ?? false }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.isStatusDragging, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
-    }
-    var finalReorderFrame: CGRect {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.finalReorderFrame) as? CGRect) ?? .zero }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.finalReorderFrame, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
-    }
-    var originalPosition: CGPoint {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.originalPosition) as? CGPoint) ?? .zero }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.originalPosition, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
-    }
-    var pointForReordering: CGPoint {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.pointForReordering) as? CGPoint) ?? .zero }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.pointForReordering, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
-    }
-    var actualView: UIView? {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.actualView) as? UIView) }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.actualView, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
-    }
-    var temporaryView: UIView? {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.temporaryView) as? UIView) }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.temporaryView, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
-    }
-    var temporaryViewForShadow: UIView? {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.temporaryViewForShadow) as? UIView) }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.temporaryViewForShadow, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    func addLongPressGestureForDragDrop(arrangedSubview: UIView) {
+        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
+        gesture.minimumPressDuration = config.longPressMinimumPressDuration
+        gesture.isEnabled = true
+        arrangedSubview.addGestureRecognizer(gesture)
+        gestures.append(gesture)
     }
     
-    func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+    @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         switch gesture.state {
         case .began:
             handleBegan(gesture: gesture)
@@ -293,5 +264,49 @@ extension DragDropable where Self: UIStackView {
                     }
                 )
             }
+    }
+}
+
+
+// MARK: - Extension + Stored Property
+
+private struct AssociatedKeys {
+    static var isStatusDragging = "isStatusDragging"
+    static var finalReorderFrame = "finalReorderFrame"
+    static var originalPosition = "originalPosition"
+    static var pointForReordering = "pointForReordering"
+    static var actualView = "actualView"
+    static var temporaryView = "temporaryView"
+    static var temporaryViewForShadow = "temporaryViewForShadow"
+}
+
+extension DragDropable {
+    private var isStatusDragging: Bool {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.isStatusDragging) as? Bool) ?? false }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.isStatusDragging, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+    private var finalReorderFrame: CGRect {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.finalReorderFrame) as? CGRect) ?? .zero }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.finalReorderFrame, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+    private var originalPosition: CGPoint {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.originalPosition) as? CGPoint) ?? .zero }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.originalPosition, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+    private var pointForReordering: CGPoint {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.pointForReordering) as? CGPoint) ?? .zero }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.pointForReordering, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+    private var actualView: UIView? {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.actualView) as? UIView) }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.actualView, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+    private var temporaryView: UIView? {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.temporaryView) as? UIView) }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.temporaryView, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    }
+    private var temporaryViewForShadow: UIView? {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.temporaryViewForShadow) as? UIView) }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.temporaryViewForShadow, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
 }

@@ -19,6 +19,8 @@
 		4A0F63552A5734E400C1C0E1 /* ExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63542A5734E400C1C0E1 /* ExampleView.swift */; };
 		4A0F63572A5734ED00C1C0E1 /* DragDropStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */; };
 		4A0F63592A57351800C1C0E1 /* HexColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63582A57351800C1C0E1 /* HexColor.swift */; };
+		4AF6B4892A59A056000D5C35 /* AnimationType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF6B4882A59A056000D5C35 /* AnimationType.swift */; };
+		4AF6B48B2A59A190000D5C35 /* Array+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF6B48A2A59A190000D5C35 /* Array+Extension.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +57,8 @@
 		4A0F63542A5734E400C1C0E1 /* ExampleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleView.swift; sourceTree = "<group>"; };
 		4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragDropStackView.swift; sourceTree = "<group>"; };
 		4A0F63582A57351800C1C0E1 /* HexColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexColor.swift; sourceTree = "<group>"; };
+		4AF6B4882A59A056000D5C35 /* AnimationType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationType.swift; sourceTree = "<group>"; };
+		4AF6B48A2A59A190000D5C35 /* Array+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -111,6 +115,8 @@
 				4A0F63542A5734E400C1C0E1 /* ExampleView.swift */,
 				4A0F63582A57351800C1C0E1 /* HexColor.swift */,
 				4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */,
+				4AF6B48A2A59A190000D5C35 /* Array+Extension.swift */,
+				4AF6B4882A59A056000D5C35 /* AnimationType.swift */,
 				4A0F632A2A5734AE00C1C0E1 /* Main.storyboard */,
 				4A0F632D2A5734AF00C1C0E1 /* Assets.xcassets */,
 				4A0F632F2A5734AF00C1C0E1 /* LaunchScreen.storyboard */,
@@ -270,9 +276,11 @@
 				4A0F63292A5734AE00C1C0E1 /* ViewController.swift in Sources */,
 				4A0F63592A57351800C1C0E1 /* HexColor.swift in Sources */,
 				4A0F63252A5734AE00C1C0E1 /* AppDelegate.swift in Sources */,
+				4AF6B4892A59A056000D5C35 /* AnimationType.swift in Sources */,
 				4A0F63272A5734AE00C1C0E1 /* SceneDelegate.swift in Sources */,
 				4A0F63552A5734E400C1C0E1 /* ExampleView.swift in Sources */,
 				4A0F63572A5734ED00C1C0E1 /* DragDropStackView.swift in Sources */,
+				4AF6B48B2A59A190000D5C35 /* Array+Extension.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

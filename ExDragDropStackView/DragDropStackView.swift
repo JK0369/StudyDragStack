@@ -35,7 +35,6 @@ struct DragDropConfig {
     }
 }
 
-@objc
 protocol DragDropStackViewDelegate {
     func didBeginDrag()
     func dargging(inUpDirection up: Bool, maxY: CGFloat, minY: CGFloat)
@@ -52,7 +51,9 @@ final class DragDropStackView: UIStackView, UIGestureRecognizerDelegate {
     let config: DragDropConfig
     var dargDropDelegate: DragDropStackViewDelegate?
     var reorderingEnabled = false {
-        didSet { setReorderingEnabled(reorderingEnabled) }
+        didSet {
+            gestures.forEach { $0.isEnabled = reorderingEnabled }
+        }
     }
     private var gestures = [UILongPressGestureRecognizer]()
     
@@ -95,97 +96,28 @@ private extension DragDropStackView {
         gestures.append(gesture)
     }
     
-    func setReorderingEnabled(_ enabled: Bool) {
-        for gesture in gestures {
-            gesture.isEnabled = enabled
+    @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+        switch gesture.state {
+        case .began:
+            handleBegan(gesture: gesture)
+        case .changed:
+            handleChanged(gesture: gesture)
+        default: // ended, cancelled, failed
+            handleEnded(gesture: gesture)
         }
     }
     
-    func updateMinimumPressDuration() {
-        for gesture in gestures {
-            gesture.minimumPressDuration = config.longPressMinimumPressDuration
-        }
-    }
-    
-    @objc func handleLongPress(_ gr: UILongPressGestureRecognizer) {
-        
-        if gr.state == .began {
-            
-            reordering = true
-            dargDropDelegate?.didBeginDrag()
-            
-            actualView = gr.view!
-            originalPosition = gr.location(in: self)
-            originalPosition.y -= config.dragHintSpacing
-            pointForReordering = originalPosition
-            prepareForReordering()
-            
-        } else if gr.state == .changed {
-            
-            // Drag the temporaryView
-            let newLocation = gr.location(in: self)
-            let xOffset = newLocation.x - originalPosition.x
-            let yOffset = newLocation.y - originalPosition.y
-            let translation = CGAffineTransform(translationX: xOffset, y: yOffset)
-            // Replicate the scale that was initially applied in perpareForReordering:
-            let scale = CGAffineTransform(scaleX: config.temporaryViewScale, y: config.temporaryViewScale)
-            temporaryView.transform = scale.concatenating(translation)
-            temporaryViewForShadow.transform = translation
-            
-            // Use the midY of the temporaryView to determine the dragging direction, location
-            // maxY and minY are used in the delegate call dargging
-            let maxY = temporaryView.frame.maxY
-            let midY = temporaryView.frame.midY
-            let minY = temporaryView.frame.minY
-            let index = indexOfArrangedSubview(actualView)
-            
-            if midY > pointForReordering.y {
-                // Dragging the view down
-                dargDropDelegate?.dargging(inUpDirection: false, maxY: maxY, minY: minY)
-                
-                if let nextView = getNextViewInStack(usingIndex: index) {
-                    if midY > nextView.frame.midY {
-                        
-                        // Swap the two arranged subviews
-                        UIView.animate(withDuration: 0.2, animations: {
-                            self.insertArrangedSubview(nextView, at: index)
-                            self.insertArrangedSubview(self.actualView, at: index + 1)
-                        })
-                        finalReorderFrame = actualView.frame
-                        pointForReordering.y = actualView.frame.midY
-                    }
-                }
-                
-            } else {
-                // Dragging the view up
-                dargDropDelegate?.dargging(inUpDirection: true, maxY: maxY, minY: minY)
-                
-                if let previousView = getPreviousViewInStack(usingIndex: index) {
-                    if midY < previousView.frame.midY {
-                        
-                        // Swap the two arranged subviews
-                        UIView.animate(withDuration: 0.2, animations: {
-                            self.insertArrangedSubview(previousView, at: index)
-                            self.insertArrangedSubview(self.actualView, at: index - 1)
-                        })
-                        finalReorderFrame = actualView.frame
-                        pointForReordering.y = actualView.frame.midY
-                        
-                    }
-                }
-            }
-            
-        } else if gr.state == .ended || gr.state == .cancelled || gr.state == .failed {
-            
-            cleanupUpAfterReordering()
-            reordering = false
-            dargDropDelegate?.didEndDrop()
-        }
-        
+    func handleBegan(gesture: UILongPressGestureRecognizer) {
+        reordering = true
+        dargDropDelegate?.didBeginDrag()
+        actualView = gesture.view!
+        originalPosition = gesture.location(in: self)
+        originalPosition.y -= config.dragHintSpacing
+        pointForReordering = originalPosition
+        prepareForReordering()
     }
     
     func prepareForReordering() {
-        
         clipsToBounds = config.clipsToBoundsWhileReordering
         
         // Configure the temporary view
@@ -197,35 +129,98 @@ private extension DragDropStackView {
         // Hide the actual view and grow the temporaryView
         actualView.alpha = 0
         
-        UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: [.allowUserInteraction, .beginFromCurrentState], animations: {
+        UIView.animate(
+            withDuration: 0.4,
+            delay: 0,
+            usingSpringWithDamping: 0.8,
+            initialSpringVelocity: 0,
+            options: [.allowUserInteraction, .beginFromCurrentState],
+            animations: { self.styleViewsForReordering() },
+            completion: nil
+        )
+    }
+    
+    func handleChanged(gesture: UILongPressGestureRecognizer) {
+        // Drag the temporaryView
+        let newLocation = gesture.location(in: self)
+        let xOffset = newLocation.x - originalPosition.x
+        let yOffset = newLocation.y - originalPosition.y
+        let translation = CGAffineTransform(translationX: xOffset, y: yOffset)
+        
+        // Replicate the scale that was initially applied in perpareForReordering:
+        let scale = CGAffineTransform(scaleX: config.temporaryViewScale, y: config.temporaryViewScale)
+        temporaryView.transform = scale.concatenating(translation)
+        temporaryViewForShadow.transform = translation
+        
+        // Use the midY of the temporaryView to determine the dragging direction, location
+        // maxY and minY are used in the delegate call dargging
+        let maxY = temporaryView.frame.maxY
+        let midY = temporaryView.frame.midY
+        let minY = temporaryView.frame.minY
+        let index = indexOfArrangedSubview(actualView)
+        
+        if midY > pointForReordering.y {
+            // Dragging the view down
+            dargDropDelegate?.dargging(inUpDirection: false, maxY: maxY, minY: minY)
             
-            self.styleViewsForReordering()
+            if let nextView = getNextViewInStack(usingIndex: index) {
+                if midY > nextView.frame.midY {
+                    
+                    // Swap the two arranged subviews
+                    UIView.animate(withDuration: 0.2, animations: {
+                        self.insertArrangedSubview(nextView, at: index)
+                        self.insertArrangedSubview(self.actualView, at: index + 1)
+                    })
+                    finalReorderFrame = actualView.frame
+                    pointForReordering.y = actualView.frame.midY
+                }
+            }
             
-            }, completion: nil)
+        } else {
+            // Dragging the view up
+            dargDropDelegate?.dargging(inUpDirection: true, maxY: maxY, minY: minY)
+            
+            if let previousView = getPreviousViewInStack(usingIndex: index) {
+                if midY < previousView.frame.midY {
+                    
+                    // Swap the two arranged subviews
+                    UIView.animate(withDuration: 0.2, animations: {
+                        self.insertArrangedSubview(previousView, at: index)
+                        self.insertArrangedSubview(self.actualView, at: index - 1)
+                    })
+                    finalReorderFrame = actualView.frame
+                    pointForReordering.y = actualView.frame.midY
+                    
+                }
+            }
+        }
+    }
+    
+    func handleEnded(gesture: UILongPressGestureRecognizer) {
+        cleanupUpAfterReordering()
+        reordering = false
+        dargDropDelegate?.didEndDrop()
     }
     
     func cleanupUpAfterReordering() {
-        
-        UIView.animate(withDuration: 0.4, delay: 0, usingSpringWithDamping: 0.8, initialSpringVelocity: 0, options: [.allowUserInteraction, .beginFromCurrentState], animations: {
-            
-            self.styleViewsForEndReordering()
-            
-            }, completion: { (Bool) -> Void in
+        UIView.animate(
+            withDuration: 0.4,
+            delay: 0,
+            usingSpringWithDamping: 0.8,
+            initialSpringVelocity: 0,
+            options: [.allowUserInteraction, .beginFromCurrentState],
+            animations: { self.styleViewsForEndReordering() },
+            completion: { _ in
                 // Hide the temporaryView, show the actualView
                 self.temporaryViewForShadow.removeFromSuperview()
                 self.temporaryView.removeFromSuperview()
                 self.actualView.alpha = 1
                 self.clipsToBounds = !self.config.clipsToBoundsWhileReordering
-        })
-        
+            }
+        )
     }
     
-    
-    // MARK:- View Styling Methods
-    // ---------------------------------------------------------------------------------------------
-    
     func styleViewsForReordering() {
-        
         let roundKey = "Round"
         let round = CABasicAnimation(keyPath: "cornerRadius")
         round.fromValue = 0
@@ -249,41 +244,26 @@ private extension DragDropStackView {
         temporaryViewForShadow.layer.shadowPath = UIBezierPath(roundedRect: temporaryView.bounds, cornerRadius: config.cornerRadii).cgPath
         
         // Shadow animations
-        let shadowOpacityKey = "ShadowOpacity"
-        let shadowOpacity = CABasicAnimation(keyPath: "shadowOpacity")
-        shadowOpacity.fromValue = 0
-        shadowOpacity.toValue = 0.2
-        shadowOpacity.duration = 0.2
-        shadowOpacity.isRemovedOnCompletion = false
-        shadowOpacity.fillMode = CAMediaTimingFillMode.forwards
+        let shadowOpacity = Animation
+            .shadowOpacity()
         
-        let shadowOffsetKey = "ShadowOffset"
-        let shadowOffset = CABasicAnimation(keyPath: "shadowOffset.height")
-        shadowOffset.fromValue = 0
-        shadowOffset.toValue = 50
-        shadowOffset.duration = 0.2
-        shadowOffset.isRemovedOnCompletion = false
-        shadowOffset.fillMode = CAMediaTimingFillMode.forwards
+        let shadowOffsetHeight = Animation
+            .shadowOffsetHeight()
         
-        let shadowRadiusKey = "ShadowRadius"
-        let shadowRadius = CABasicAnimation(keyPath: "shadowRadius")
-        shadowRadius.fromValue = 0
-        shadowRadius.toValue = 20
-        shadowRadius.duration = 0.2
-        shadowRadius.isRemovedOnCompletion = false
-        shadowRadius.fillMode = CAMediaTimingFillMode.forwards
+        let shadowRadius = Animation
+            .shadowRadius()
         
-        temporaryViewForShadow.layer.add(shadowOpacity, forKey: shadowOpacityKey)
-        temporaryViewForShadow.layer.add(shadowOffset, forKey: shadowOffsetKey)
-        temporaryViewForShadow.layer.add(shadowRadius, forKey: shadowRadiusKey)
+        [shadowOpacity, shadowOffsetHeight, shadowRadius]
+            .map(\.tupleAnimationWithID)
+            .forEach(temporaryViewForShadow.layer.add)
         
         // Scale down and round other arranged subviews
-        for subview in arrangedSubviews {
-            if subview != actualView {
+        arrangedSubviews
+            .filter { $0 != actualView }
+            .forEach { subview in
                 subview.layer.add(round, forKey: roundKey)
                 subview.transform = CGAffineTransform(scaleX: config.otherViewsScale, y: config.otherViewsScale)
             }
-        }
     }
     
     func styleViewsForEndReordering() {
@@ -302,33 +282,18 @@ private extension DragDropStackView {
         temporaryView.layer.add(square, forKey: squareKey)
         
         // Shadow animations
-        let shadowOpacityKey = "ShadowOpacity"
-        let shadowOpacity = CABasicAnimation(keyPath: "shadowOpacity")
-        shadowOpacity.fromValue = 0.2
-        shadowOpacity.toValue = 0
-        shadowOpacity.duration = 0.2
-        shadowOpacity.isRemovedOnCompletion = false
-        shadowOpacity.fillMode = CAMediaTimingFillMode.forwards
+        let shadowOpacity = Animation
+            .shadowOpacity()
         
-        let shadowOffsetKey = "ShadowOffset"
-        let shadowOffset = CABasicAnimation(keyPath: "shadowOffset.height")
-        shadowOffset.fromValue = 50
-        shadowOffset.toValue = 0
-        shadowOffset.duration = 0.2
-        shadowOffset.isRemovedOnCompletion = false
-        shadowOffset.fillMode = CAMediaTimingFillMode.forwards
+        let shadowOffsetHeight = Animation
+            .shadowOffsetHeight()
         
-        let shadowRadiusKey = "ShadowRadius"
-        let shadowRadius = CABasicAnimation(keyPath: "shadowRadius")
-        shadowRadius.fromValue = 20
-        shadowRadius.toValue = 0
-        shadowRadius.duration = 0.4
-        shadowRadius.isRemovedOnCompletion = false
-        shadowRadius.fillMode = CAMediaTimingFillMode.forwards
+        let shadowRadius = Animation
+            .shadowRadius()
         
-        temporaryViewForShadow.layer.add(shadowOpacity, forKey: shadowOpacityKey)
-        temporaryViewForShadow.layer.add(shadowOffset, forKey: shadowOffsetKey)
-        temporaryViewForShadow.layer.add(shadowRadius, forKey: shadowRadiusKey)
+        [shadowOpacity, shadowOffsetHeight, shadowRadius]
+            .map(\.tupleReversedAnimationWithID)
+            .forEach(temporaryViewForShadow.layer.add)
         
         // Return other arranged subviews to original appearances
         for subview in arrangedSubviews {
@@ -338,11 +303,12 @@ private extension DragDropStackView {
             })
         }
     }
-    
-    
-    // MARK:- Stack View Helper Methods
-    // ---------------------------------------------------------------------------------------------
-    
+}
+
+
+// MARK: - Helper Method
+
+private extension DragDropStackView {
     func indexOfArrangedSubview(_ view: UIView) -> Int {
         for (index, subview) in arrangedSubviews.enumerated() {
             if view == subview {
@@ -353,12 +319,10 @@ private extension DragDropStackView {
     }
     
     func getPreviousViewInStack(usingIndex index: Int) -> UIView? {
-        if index == 0 { return nil }
-        return arrangedSubviews[index - 1]
+        arrangedSubviews[safe: index - 1]
     }
     
     func getNextViewInStack(usingIndex index: Int) -> UIView? {
-        if index == arrangedSubviews.count - 1 { return nil }
-        return arrangedSubviews[index + 1]
+        arrangedSubviews[safe: index + 1]
     }
 }

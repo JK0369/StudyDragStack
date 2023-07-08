@@ -19,6 +19,7 @@
 		4A0F63552A5734E400C1C0E1 /* ExampleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63542A5734E400C1C0E1 /* ExampleView.swift */; };
 		4A0F63572A5734ED00C1C0E1 /* DragDropStackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */; };
 		4A0F63592A57351800C1C0E1 /* HexColor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0F63582A57351800C1C0E1 /* HexColor.swift */; };
+		4AEF44562A59BF19007EC975 /* DragDropable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AEF44552A59BF19007EC975 /* DragDropable.swift */; };
 		4AF6B4892A59A056000D5C35 /* AnimationType.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF6B4882A59A056000D5C35 /* AnimationType.swift */; };
 		4AF6B48B2A59A190000D5C35 /* Array+Extension.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4AF6B48A2A59A190000D5C35 /* Array+Extension.swift */; };
 /* End PBXBuildFile section */
@@ -57,6 +58,7 @@
 		4A0F63542A5734E400C1C0E1 /* ExampleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExampleView.swift; sourceTree = "<group>"; };
 		4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragDropStackView.swift; sourceTree = "<group>"; };
 		4A0F63582A57351800C1C0E1 /* HexColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HexColor.swift; sourceTree = "<group>"; };
+		4AEF44552A59BF19007EC975 /* DragDropable.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DragDropable.swift; sourceTree = "<group>"; };
 		4AF6B4882A59A056000D5C35 /* AnimationType.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnimationType.swift; sourceTree = "<group>"; };
 		4AF6B48A2A59A190000D5C35 /* Array+Extension.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Array+Extension.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -109,14 +111,15 @@
 		4A0F63232A5734AE00C1C0E1 /* ExDragDropStackView */ = {
 			isa = PBXGroup;
 			children = (
+				4AEF44542A59BEF5007EC975 /* Protocol */,
+				4AEF44532A59BEE7007EC975 /* View */,
+				4AEF44522A59BED8007EC975 /* Type */,
+				4AEF44512A59BED1007EC975 /* Extension */,
 				4A0F63242A5734AE00C1C0E1 /* AppDelegate.swift */,
 				4A0F63262A5734AE00C1C0E1 /* SceneDelegate.swift */,
 				4A0F63282A5734AE00C1C0E1 /* ViewController.swift */,
 				4A0F63542A5734E400C1C0E1 /* ExampleView.swift */,
 				4A0F63582A57351800C1C0E1 /* HexColor.swift */,
-				4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */,
-				4AF6B48A2A59A190000D5C35 /* Array+Extension.swift */,
-				4AF6B4882A59A056000D5C35 /* AnimationType.swift */,
 				4A0F632A2A5734AE00C1C0E1 /* Main.storyboard */,
 				4A0F632D2A5734AF00C1C0E1 /* Assets.xcassets */,
 				4A0F632F2A5734AF00C1C0E1 /* LaunchScreen.storyboard */,
@@ -140,6 +143,38 @@
 				4A0F63472A5734B000C1C0E1 /* ExDragDropStackViewUITestsLaunchTests.swift */,
 			);
 			path = ExDragDropStackViewUITests;
+			sourceTree = "<group>";
+		};
+		4AEF44512A59BED1007EC975 /* Extension */ = {
+			isa = PBXGroup;
+			children = (
+				4AF6B48A2A59A190000D5C35 /* Array+Extension.swift */,
+			);
+			path = Extension;
+			sourceTree = "<group>";
+		};
+		4AEF44522A59BED8007EC975 /* Type */ = {
+			isa = PBXGroup;
+			children = (
+				4AF6B4882A59A056000D5C35 /* AnimationType.swift */,
+			);
+			path = Type;
+			sourceTree = "<group>";
+		};
+		4AEF44532A59BEE7007EC975 /* View */ = {
+			isa = PBXGroup;
+			children = (
+				4A0F63562A5734ED00C1C0E1 /* DragDropStackView.swift */,
+			);
+			path = View;
+			sourceTree = "<group>";
+		};
+		4AEF44542A59BEF5007EC975 /* Protocol */ = {
+			isa = PBXGroup;
+			children = (
+				4AEF44552A59BF19007EC975 /* DragDropable.swift */,
+			);
+			path = Protocol;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -276,6 +311,7 @@
 				4A0F63292A5734AE00C1C0E1 /* ViewController.swift in Sources */,
 				4A0F63592A57351800C1C0E1 /* HexColor.swift in Sources */,
 				4A0F63252A5734AE00C1C0E1 /* AppDelegate.swift in Sources */,
+				4AEF44562A59BF19007EC975 /* DragDropable.swift in Sources */,
 				4AF6B4892A59A056000D5C35 /* AnimationType.swift in Sources */,
 				4A0F63272A5734AE00C1C0E1 /* SceneDelegate.swift in Sources */,
 				4A0F63552A5734E400C1C0E1 /* ExampleView.swift in Sources */,

@@ -9,7 +9,7 @@ import UIKit
 
 enum Animation {
     struct Config {
-        let uniqID = UUID().uuidString
+        let id = UUID().uuidString
         let fromValue: Double
         let toValue: Double
         let duration: Double
@@ -30,6 +30,16 @@ enum Animation {
             self.fillMode = fillMode
         }
     }
+    
+    case cornerRadius(
+        Config = .init(
+            fromValue: 0,
+            toValue: 5.0,
+            duration: 0.1,
+            isRemovedOnCompletion: false,
+            fillMode: .forwards
+        )
+    )
     
     case shadowOpacity(
         Config = .init(
@@ -60,7 +70,7 @@ enum Animation {
     )
     
     var animation: CABasicAnimation {
-        let basicAnimation = CABasicAnimation(keyPath: config.uniqID)
+        let basicAnimation = CABasicAnimation(keyPath: config.id)
         basicAnimation.fromValue = config.fromValue
         basicAnimation.toValue = config.toValue
         basicAnimation.duration = config.duration
@@ -71,7 +81,7 @@ enum Animation {
     
     /// from <-> to
     var reversedAnimation: CABasicAnimation {
-        let basicAnimation = CABasicAnimation(keyPath: config.uniqID)
+        let basicAnimation = CABasicAnimation(keyPath: config.id)
         basicAnimation.fromValue = config.toValue
         basicAnimation.toValue = config.fromValue
         basicAnimation.duration = config.duration
@@ -80,17 +90,22 @@ enum Animation {
         return basicAnimation
     }
     
+    var id: String {
+        config.id
+    }
+    
     var tupleAnimationWithID: (CABasicAnimation, String) {
-        (animation, config.uniqID)
+        (animation, id)
     }
     
     var tupleReversedAnimationWithID: (CABasicAnimation, String) {
-        (reversedAnimation, config.uniqID)
+        (reversedAnimation, id)
     }
     
     private var config: Config {
         switch self {
         case
+            .cornerRadius(let config),
             .shadowOpacity(let config),
             .shadowOffsetHeight(let config),
             .shadowRadius(let config)
@@ -101,6 +116,8 @@ enum Animation {
     
     private var key: String {
         switch self {
+        case .cornerRadius:
+            return "cornerRadius"
         case .shadowOpacity:
             return "shadowOpacity"
         case .shadowOffsetHeight:

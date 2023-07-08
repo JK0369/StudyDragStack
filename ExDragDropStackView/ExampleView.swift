@@ -56,7 +56,7 @@ class ExampleView: UIView {
         
         // ----------------------------------------------------------------------------
         // Set reorderingEnabled to true to, well, enable reordering
-        self.dargDropStackView.reorderingEnabled = true
+        self.dargDropStackView.dragDropEnabled = true
         // ----------------------------------------------------------------------------
         
     }

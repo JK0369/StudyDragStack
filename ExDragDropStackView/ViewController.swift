@@ -53,7 +53,7 @@ class ViewController: UIViewController, DragDropStackViewDelegate {
     
     // Delegate Methods
     func didBeginDrag() {
-        print("Did begin reordering")
+        print("Did begin DragDrop")
     }
     
     func dargging(inUpDirection up: Bool, maxY: CGFloat, minY: CGFloat) {
@@ -62,7 +62,7 @@ class ViewController: UIViewController, DragDropStackViewDelegate {
 
     
     func didEndDrop() {
-        print("Did end reordering")
+        print("Did end DragDrop")
     }
     
 }

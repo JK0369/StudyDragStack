@@ -6,9 +6,12 @@
 //
 
 import UIKit
+import RxSwift
+import RxCocoa
+import RxGesture
 
 struct DragDropConfig {
-    let clipsToBoundsWhileReordering: Bool
+    let clipsToBoundsWhileDragDrop: Bool
     let cornerRadii: Double
     let dargViewScale: Double
     let otherViewsScale: Double
@@ -17,7 +20,7 @@ struct DragDropConfig {
     let longPressMinimumPressDuration: Double
     
     init(
-        clipsToBoundsWhileReordering: Bool = false,
+        clipsToBoundsWhileDragDrop: Bool = false,
         cornerRadii: Double = 5.0,
         dargViewScale: Double = 1.1,
         otherViewsScale: Double = 0.97,
@@ -25,7 +28,7 @@ struct DragDropConfig {
         dragHintSpacing: Double = 5.0,
         longPressMinimumPressDuration: Double = 0.2
     ) {
-        self.clipsToBoundsWhileReordering = clipsToBoundsWhileReordering
+        self.clipsToBoundsWhileDragDrop = clipsToBoundsWhileDragDrop
         self.cornerRadii = cornerRadii
         self.dargViewScale = dargViewScale
         self.otherViewsScale = otherViewsScale
@@ -39,6 +42,7 @@ protocol DragDropable: AnyObject {
     var dargDropDelegate: DragDropStackViewDelegate? { get }
     var config: DragDropConfig { get }
     var gestures: [UILongPressGestureRecognizer] { get set }
+    var disposeBag: DisposeBag { get }
     
     /// must call each views in stackView's addArrangedSubview
     func addLongPressGestureForDragDrop(arrangedSubview: UIView)
@@ -46,14 +50,19 @@ protocol DragDropable: AnyObject {
 
 extension DragDropable where Self: UIStackView {
     func addLongPressGestureForDragDrop(arrangedSubview: UIView) {
-        let gesture = UILongPressGestureRecognizer(target: self, action: #selector(handleLongPress(_:)))
-        gesture.minimumPressDuration = config.longPressMinimumPressDuration
-        gesture.isEnabled = true
-        arrangedSubview.addGestureRecognizer(gesture)
-        gestures.append(gesture)
+        arrangedSubview.rx.longPressGesture(configuration: { [weak self] gesture, delegate in
+            gesture.minimumPressDuration = self?.config.longPressMinimumPressDuration ?? 0
+            gesture.isEnabled = true
+            arrangedSubview.addGestureRecognizer(gesture)
+            self?.gestures.append(gesture)
+        })
+        .subscribe { [weak self] gesture in
+            self?.handleLongPress(gesture)
+        }
+        .disposed(by: disposeBag)
     }
     
-    @objc func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
+    func handleLongPress(_ gesture: UILongPressGestureRecognizer) {
         switch gesture.state {
         case .began:
             handleBegan(gesture: gesture)
@@ -73,17 +82,17 @@ extension DragDropable where Self: UIStackView {
         }
         originalPosition = gesture.location(in: self)
         originalPosition.y -= config.dragHintSpacing
-        pointForReordering = originalPosition
-        prepareForReordering()
+        pointForDragDrop = originalPosition
+        prepareForDragDrop()
     }
     
-    func prepareForReordering() {
-        clipsToBounds = config.clipsToBoundsWhileReordering
+    func prepareForDragDrop() {
+        clipsToBounds = config.clipsToBoundsWhileDragDrop
         guard let actualView else { return }
         
         temporaryView = actualView.snapshotView(afterScreenUpdates: true)
         temporaryView?.frame = actualView.frame
-        finalReorderFrame = actualView.frame
+        finalDragDropFrame = actualView.frame
         if let temporaryView {
             addSubview(temporaryView)
         }
@@ -150,7 +159,7 @@ extension DragDropable where Self: UIStackView {
         let yOffset = newLocation.y - originalPosition.y
         let translation = CGAffineTransform(translationX: xOffset, y: yOffset)
         
-        // Replicate the scale that was initially applied in perpareForReordering:
+        // Replicate the scale that was initially applied in perpareForDragDrop:
         guard let temporaryView else { return }
         
         let scale = CGAffineTransform(scaleX: config.dargViewScale, y: config.dargViewScale)
@@ -165,7 +174,7 @@ extension DragDropable where Self: UIStackView {
         let index = arrangedSubviews
             .firstIndex(where: { $0 == actualView }) ?? 0
         
-        if midY > pointForReordering.y {
+        if midY > pointForDragDrop.y {
             // Dragging the view down
             dargDropDelegate?.dargging(inUpDirection: false, maxY: maxY, minY: minY)
             
@@ -177,8 +186,8 @@ extension DragDropable where Self: UIStackView {
                         self.insertArrangedSubview(nextView, at: index)
                         self.insertArrangedSubview(actualView, at: index + 1)
                     })
-                    finalReorderFrame = actualView.frame
-                    pointForReordering.y = actualView.frame.midY
+                    finalDragDropFrame = actualView.frame
+                    pointForDragDrop.y = actualView.frame.midY
                 }
             }
             
@@ -194,8 +203,8 @@ extension DragDropable where Self: UIStackView {
                         self.insertArrangedSubview(previousView, at: index)
                         self.insertArrangedSubview(actualView, at: index - 1)
                     })
-                    finalReorderFrame = actualView.frame
-                    pointForReordering.y = actualView.frame.midY
+                    finalDragDropFrame = actualView.frame
+                    pointForDragDrop.y = actualView.frame.midY
                     
                 }
             }
@@ -203,12 +212,12 @@ extension DragDropable where Self: UIStackView {
     }
     
     func handleEnded(gesture: UILongPressGestureRecognizer) {
-        cleanupUpAfterReordering()
+        cleanupUpAfterDragDrop()
         isStatusDragging = false
         dargDropDelegate?.didEndDrop()
     }
     
-    func cleanupUpAfterReordering() {
+    func cleanupUpAfterDragDrop() {
         UIView.animate(
             withDuration: 0.4,
             delay: 0,
@@ -221,7 +230,7 @@ extension DragDropable where Self: UIStackView {
                 self.temporaryViewForShadow?.removeFromSuperview()
                 self.temporaryView?.removeFromSuperview()
                 self.actualView?.alpha = 1
-                self.clipsToBounds = !self.config.clipsToBoundsWhileReordering
+                self.clipsToBounds = !self.config.clipsToBoundsWhileDragDrop
             }
         )
     }
@@ -233,7 +242,7 @@ extension DragDropable where Self: UIStackView {
         
         // Return drag view to original appearance
         temporaryView?.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
-        temporaryView?.frame = finalReorderFrame
+        temporaryView?.frame = finalDragDropFrame
         temporaryView?.alpha = 1.0
         temporaryView?.layer.add(animation, forKey: id)
         
@@ -272,30 +281,30 @@ extension DragDropable where Self: UIStackView {
 
 private struct AssociatedKeys {
     static var isStatusDragging = "isStatusDragging"
-    static var finalReorderFrame = "finalReorderFrame"
+    static var finalDragDropFrame = "finalDragDropFrame"
     static var originalPosition = "originalPosition"
-    static var pointForReordering = "pointForReordering"
+    static var pointForDragDrop = "pointForDragDrop"
     static var actualView = "actualView"
     static var temporaryView = "temporaryView"
     static var temporaryViewForShadow = "temporaryViewForShadow"
 }
 
 extension DragDropable {
-    private var isStatusDragging: Bool {
+    var isStatusDragging: Bool {
         get { (objc_getAssociatedObject(self, &AssociatedKeys.isStatusDragging) as? Bool) ?? false }
         set { objc_setAssociatedObject(self, &AssociatedKeys.isStatusDragging, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
-    private var finalReorderFrame: CGRect {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.finalReorderFrame) as? CGRect) ?? .zero }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.finalReorderFrame, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    private var finalDragDropFrame: CGRect {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.finalDragDropFrame) as? CGRect) ?? .zero }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.finalDragDropFrame, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
     private var originalPosition: CGPoint {
         get { (objc_getAssociatedObject(self, &AssociatedKeys.originalPosition) as? CGPoint) ?? .zero }
         set { objc_setAssociatedObject(self, &AssociatedKeys.originalPosition, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
-    private var pointForReordering: CGPoint {
-        get { (objc_getAssociatedObject(self, &AssociatedKeys.pointForReordering) as? CGPoint) ?? .zero }
-        set { objc_setAssociatedObject(self, &AssociatedKeys.pointForReordering, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
+    private var pointForDragDrop: CGPoint {
+        get { (objc_getAssociatedObject(self, &AssociatedKeys.pointForDragDrop) as? CGPoint) ?? .zero }
+        set { objc_setAssociatedObject(self, &AssociatedKeys.pointForDragDrop, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC) }
     }
     private var actualView: UIView? {
         get { (objc_getAssociatedObject(self, &AssociatedKeys.actualView) as? UIView) }

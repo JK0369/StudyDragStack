@@ -55,7 +55,7 @@ class ExampleView: UIView {
         self.dargDropStackView.clipsToBounds = false
         
         // ----------------------------------------------------------------------------
-        // Set reorderingEnabled to true to, well, enable reordering
+        // Set DragDropEnabled to true to, well, enable DragDrop
         self.dargDropStackView.dragDropEnabled = true
         // ----------------------------------------------------------------------------
         
